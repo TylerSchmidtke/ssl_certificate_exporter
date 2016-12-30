@@ -12,14 +12,14 @@ import time
 
 # Create a metric to track time spent and requests made.
 REQUEST_TIME = Summary('ssl_certificate_processing_seconds',
-                       'Time checking certificates on all hosts in the provided subnets file')
+                       'Time checking certificates on all provided networks')
 g_days_valid = Gauge('ssl_certificate_days_valid',
                      'Number of days before the certificate expires',
                      ['commonName', 'ipAddress', 'hostname', 'issuer', 'serialNumber'])
 
 
 @click.command()
-@click.option('--nets', help='Comma-separated list of subnets to scan.', required=True)
+@click.option('--nets', help='Comma-separated list of networks to scan.', required=True)
 @click.option('--port', default=9515, help='Port to listen on for web interface and telemetry. (default "9515")')
 @click.option('--ssl_port', default=443, help='Port to scan on remote hosts for SSL certificates. (default "443")')
 @click.option('--sleep', default=43200, help='Time to wait between scans in seconds. (default "43200")')
@@ -46,16 +46,16 @@ def main(nets, port, ssl_port, sleep, timeout, no_dns, debug):
 
     # Read networks to scan and scan
     ips = []
-    subnet_ips = []
-    for subnet in nets.split(','):
+    network_ips = []
+    for network in nets.split(','):
         try:
-            subnet_ips = IPNetwork(subnet.rstrip())
+            network_ips = IPNetwork(network.rstrip())
         except AddrFormatError as e:
             logging.info(e)
             exit(1)
 
         # Exclude the network and broadcast addresses
-        for ip in subnet_ips[1:-1]:
+        for ip in network_ips[1:-1]:
             ips.append(str(ip))
     while True:
         logging.info('Starting scan of {0} IP addresses, port {1}'.format(len(ips), ssl_port))
